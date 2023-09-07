@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.productMapper">
+
+	<!-- 조건절 -->
+	<sql id="search">
+		<if test='searchType != null and searchType.equals("pName")'>
+		   AND pName like concat('%', #{searchValue}, '%')
+		</if>
+		<if test='searchType != null and searchType.equals("pType")'>
+		   AND pType = #{searchValue}
+		</if>
+		<if test='searchType != null and searchType.equals("grid")'>
+		   AND pType != 'E'
+		</if>
+	</sql>
+	
+	<sql id="sort">
+		<if test='sort != null and sort.equals("new")'>
+		 ORDER BY pDate DESC
+		</if>
+		<if test='sort != null and sort.equals("pop")'>
+		 ORDER BY pOutput DESC
+		</if>
+		<if test='sort != null and sort.equals("price")'>
+		 ORDER BY pPrice DESC
+		</if>
+		<if test='sort != null and sort.equals("random")'>
+		 ORDER BY RAND()
+		</if>
+	</sql>
+	
+	<!-- 전체 상품 조회 -->
+	<select id="selectAllProduct" resultType="ProductVO" parameterType="SearchVO">
+		SELECT *
+		     , (SELECT aChangeName FROM pattach WHERE product.pNo = pattach.pNo) as aChangeName
+		  FROM product
+		 WHERE delYN = 'N'
+		<include refid="search" />
+		<include refid="sort" />
+		 LIMIT #{startNum}, #{perPageNum}
+	</select>
+	
+	<select id="totalProduct" resultType="int" parameterType="SearchVO">
+		SELECT COUNT(*)
+		  FROM product
+		 WHERE delYN = 'N'
+		<include refid="search" />
+	</select>
+	
+	<!-- 메인 페이지용 판매량 높고 판매중인 상품만 메인으로 -->
+	<select id="selectIndexProduct" resultType="ProductVO">
+		SELECT *
+		     , (SELECT aChangeName FROM pattach WHERE product.pNo = pattach.pNo) as aChangeName
+		  FROM product
+		 WHERE delYN = 'N'
+		   AND pType != 'E'
+		   AND pStock > 0
+		 ORDER BY pOutput DESC
+		 LIMIT 16
+	</select>
+	
+	<!-- 상품 조회 -->
+	<select id="selectOneProduct" resultType="ProductVO" parameterType="int">
+		SELECT *
+		     , (SELECT aChangeName FROM pattach WHERE product.pNo = pattach.pNo) as aChangeName
+		  FROM product
+		 WHERE pNo = #{pNo}
+	</select>
+	
+	<!-- 상품 신규 등록 -->
+	<insert id="insertProduct" parameterType="ProductVO">
+		INSERT INTO
+		product (
+			 pType
+			,pName
+			,pPrice
+			,pInput
+			,pOutput
+			,pStock
+			,delYN
+		) VALUES (
+			 #{pType}
+			,#{pName}
+			,#{pPrice}
+			,#{pInput}
+			,0
+			,#{pInput}
+			,'N'
+		)
+		<selectKey order="AFTER" keyProperty="pNo" resultType="int">
+			SELECT MAX(pNo)
+			  FROM product
+		</selectKey>
+	</insert>
+	
+	<!-- 상품 입고 -->
+	<update id="inputProduct" parameterType="ProductVO">
+		UPDATE product
+		   SET pInput = #{pInput}
+		     , pStock = pStock+#{pInput}
+		 WHERE pNo = #{pNo}
+	</update>
+	
+	<!-- 상품 판매량 - pStock이 0보다 작아지지 않도록 유효성 체크 필요 -->
+	<update id="outputProduct" parameterType="ProductVO">
+		UPDATE product
+		   SET pOutput = #{pOutput}
+		     , pStock = pStock-#{pOutput}
+		 WHERE pNo = #{pNo}
+	</update>
+	
+	<!-- 상품 정보 수정 -->
+	<update id="updateProduct" parameterType="ProductVO">
+		UPDATE product
+		   SET pType = #{pType}
+		     , pName = #{pName}
+		     , pPrice = #{pPrice}
+		     , pDate = now()
+		 WHERE pNo = #{pNo}
+	</update>
+		
+	<!-- 상품 DB에서 삭제 -->
+	<delete id="deleteProduct" parameterType="int">
+		DELETE
+		  FROM product
+		 WHERE pNo = #{pNo}
+	</delete>
+	
+	<!-- 관리자용 sql쿼리문모음================================================ -->
+	<!-- 메인용 -->
+	<select id="selectByAdmin" resultType="ProductVO" parameterType="AdminSearchVO">
+		<![CDATA[
+    SELECT Product.*, pAttach.aNo, pAttach.aOriginName
+    FROM Product
+    LEFT JOIN pAttach ON Product.pNo = pAttach.pNo
+    WHERE 1 = 1
+    ]]>
+		<if test='searchType != null and searchType.equals("pNo")'>
+			AND Product.pNo like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("pName")'>
+			AND Product.pName like concat('%',#{searchValue},'%')
+		</if>
+		order by Product.pNo asc limit #{pPage},#{perPageNum}
+	</select>
+	
+	<select id="selectByAdminFromProduct" resultType="ProductVO" parameterType="AdminSearchVO">
+		SELECT Product.*, pAttach.aNo, pAttach.aOriginName
+		    FROM Product
+		    LEFT JOIN pAttach ON Product.pNo = pAttach.pNo
+		    WHERE 1 = 1
+		<if test='searchType != null and searchType.equals("pNo")'>
+			AND Product.pNo like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("pName")'>
+			AND Product.pName like concat('%',#{searchValue},'%')
+		</if>
+		order by Product.pNo asc limit #{sNum},#{perPageNum}
+	</select>
+	
+	<!-- 상품 전체 목록 갯수 -->
+	<select id="productTotal" resultType="int">
+		select count(*) as cnt from product
+		<if test='searchType != null and searchType.equals("pNo")'>
+			where pNo like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("pName")'>
+			where pName like concat('%',#{searchValue},'%')
+		</if>
+	</select>
+	
+	<!-- 상품 상세 -->
+	<select id="selectOneProductByAdmin" resultType="productVO" parameterType="int">
+		select * from product
+		where pNo = #{pNo}
+	</select>
+	
+	<!-- 상품 새등록 -->
+	<insert id="insertProductByAdmin" parameterType="productVO">
+	INSERT INTO Product (pType, pName, pPrice, pInput, pOutput, pStock, pDate, pDetail)
+		VALUES (#{pType}, #{pName}, #{pPrice}, #{pInput}, #{pOutput}, #{pInput}, NOW(), #{pDetail});
+		<selectKey order="AFTER" keyProperty="pNo" resultType="int">
+			SELECT MAX(pNo)
+			  FROM product
+		</selectKey>
+	</insert>
+	
+	<!-- 상품 새등록 할때 첨부파일 인서트 -->
+	<insert id="insertAttach" parameterType="PattachVO">
+	INSERT INTO pAttach (pNo,aOriginName,aChangeName)
+		VALUES (#{pNo},#{aOriginName},#{aChangeName})
+		<selectKey order="AFTER" keyProperty="aNo" resultType="int">
+			SELECT MAX(aNo)
+			  FROM pattach
+		</selectKey>
+	</insert>
+	
+	<!-- 상품 삭제 -->
+	<update id="productDelete" parameterType="int">
+		update product
+		set delYN = 'Y'
+		Where pNo = #{pNo}
+	</update>
+	
+	<!-- 상품업데이트 -->
+	<update id="productUpdateByAdmin" parameterType="productVO">
+		UPDATE product
+		   SET pType = #{pType}
+		     , pName = #{pName}
+		     , pPrice = #{pPrice}
+		     , pInput = pInput + #{pInput}
+		     , pStock = pStock + #{pInput}
+		     , pDate = NOW()
+		     , pNote = #{pNote}
+		     , pDetail = #{pDetail}
+		 WHERE pNo = #{pNo}
+	</update>
+	
+	<!-- 첨부파일 업데이트 -->
+	<update id="pattchUpdateByAdmin" parameterType="PattachVO">
+		update pattach
+		   set aOriginName = #{aOriginName}
+		     , aChangeName = #{aChangeName}
+		 WHERE pNo = #{pNo}
+	</update>
+</mapper>

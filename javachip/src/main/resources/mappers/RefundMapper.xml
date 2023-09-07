@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.refundMapper">
+	<!-- 환불 리스트 -->
+	<select id="selectRefund" resultType="refundVO" parameterType="AdminSearchVO">
+		select o.uNo, r.*
+		from refund r
+		join order_ o ON r.oNo = o.oNo
+		where uNo = #{uNo}
+		order by refNo asc limit #{sNum},#{perPageNum}
+	</select>
+	
+	<!-- 페이징 위한 환불 총개수 -->
+	<select id="RefundTotal" resultType="int">
+		select count(*) as cnt from refund
+	</select>
+</mapper>

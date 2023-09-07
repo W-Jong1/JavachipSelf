@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.order_detailMapper">
+
+	<!-- 해당 주문 상세 정보 조회 -->
+	<select id="selectOrderDetail" parameterType="int" resultType="Order_DetailVO">
+		SELECT *
+		     , (SELECT pName FROM product WHERE order_detail.pNo = product.pNo) as pName
+		     , (SELECT pPrice FROM product WHERE order_detail.pNo = product.pNo) as pPrice
+		  FROM order_detail
+		 WHERE oNo = #{oNo}
+	</select>
+	
+	<!-- 유저의 주문 중에서 정기배송 상품 조회 -->
+	<select id="selectUserRegularProduct" parameterType="int" resultType="Order_DetailVO">
+		SELECT *
+		     , (SELECT pName FROM product WHERE d.pNo = product.pNo) as pName
+		     , (SELECT pPrice FROM product WHERE d.pNo = product.pNo) as pPrice
+		  FROM order_detail d
+		  JOIN order_ o
+		    ON d.oNo = o.oNo
+		 WHERE o.uNo = #{uNo}
+		   AND (SELECT pType FROM product WHERE d.pNo = product.pNo) = 'G'
+		 ORDER BY o.oDate DESC
+	</select>
+	
+	<!-- 모든 주문에서 정기배송 상품 조회 -->
+	<select id="selectAllUserRegularProduct" resultType="Order_DetailVO">
+		SELECT *
+		     , (SELECT pName FROM product WHERE order_detail.pNo = product.pNo) as pName
+		     , (SELECT pPrice FROM product WHERE order_detail.pNo = product.pNo) as pPrice
+		  FROM order_detail
+		 WHERE (SELECT pType FROM product WHERE order_detail.pNo = product.pNo) = 'G'
+ 		 ORDER BY dNo DESC
+	</select>
+	
+	<!-- 주문 상세 정보 등록 -->
+	<insert id="insertOrderDetail" parameterType="Order_DetailVO">
+		INSERT INTO
+		order_detail (
+			oNo,
+			pNo,
+			dCount
+		) VALUES (
+			#{oNo},
+			#{pNo},
+			#{dCount}
+		)
+		<selectKey order="AFTER" keyProperty="dNo" resultType="int">
+			SELECT MAX(dNo)
+			  FROM order_detail
+		</selectKey>
+	</insert>
+	
+</mapper>

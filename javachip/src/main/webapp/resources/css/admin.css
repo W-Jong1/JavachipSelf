@@ -1,0 +1,104 @@
+div {
+	display: block;
+}
+.ctd {
+	text-align: center
+}
+/* 관리자 전체크기 */
+.frame.admin {
+	overflow : hidden;
+	margin: 0 auto;
+	width: 1000px;
+}
+/* 관리자 메인 */
+.main.admin{
+	width: 750px;
+	float: left;
+	padding: 0px 0px 60px;
+	
+	border: 1px solid #dcdcdc;
+}
+/* 관리자 프로필 */
+.profile.admin {
+	width: 750px;
+	padding: 46px 30px 46px;
+/* 	background-color: rgba( 0, 0, 0, 0.2 ); */
+	border-bottom: 1px solid #dcdcdc;
+}
+/* 프로필 내용 */
+div.profile.admin {
+	display: flex;
+	justify-content: space-between;
+	align-items : center;
+	
+}
+.admin td {
+	text-align: right; 
+}
+.uName.admin {
+	font-weight : bold;
+	font-size : 20px;
+}
+
+.admin td:not(.ctd) {
+	text-align: left; 
+}
+/* 관리자 사이드 */
+.side.admin {
+	float: left;
+	width: 250px;
+	
+	padding: 10px;
+	color: #000000;
+}
+/* 관리자 멤버관리 section */
+.section.member.admin {
+	width: 750px;
+	float: left;
+	padding: 30px 0px 30px;
+	justify-content:space-around;
+}
+
+/* 관리자 테이블 */
+.tableAdmin.admin {
+	width:100%;
+}
+
+.tableAdmin.admin th {
+	text-align: center;
+	background-color: #d2d2d2;
+}
+
+.tableAdmin.admin td:first-child, 
+.tableAdmin.admin td:nth-child(2) {
+	text-align: center;
+}
+/* 관리자 검색창 */
+.search.admin {
+	float: right;
+}
+.main.admin > div {
+	display: float;
+}
+/* 관리자 개인정보 수정 버튼 */
+.btn.mModify.admin {
+	width: 150px;
+	height: 40px;
+	
+	font-weight: bold;
+	border-radius: 20px;
+	border: 2px solid #7fad39;
+	background-color: transparent;
+}
+/* 아이콘 원형 */
+.iCircle {
+	width : 60px;
+	height : 60px;
+	border-radius: 50%;
+	background-color: tomato;
+	
+	/* div 안 중앙 정렬 */
+	display : flex;
+	justify-content : center;
+	align-items : center;	
+}

@@ -1,0 +1,115 @@
+/* QnA */
+
+.pNoSelectWrap {
+	position: relative;
+	width: 210px;
+	height: 42px;
+}
+
+.pNoEvent {
+	position: absolute;
+	z-index: 10;
+	width: 210px;
+	height: 42px;
+	cursor: pointer;
+}
+
+.pContainer.pInfo {
+	display: flex;
+	border: 1px solid #ced4da;
+	border-radius: 0.25rem;
+}
+.img.pInfo {
+	margin: 10px;
+	width: 80px;
+	height: 80px;
+	border: 1px solid #ced4da;
+	
+	/* div 안 중앙 정렬 */
+	display : flex;
+	justify-content : center;
+	align-items : center;
+}
+.pContainer.pInfo > div {
+	/* div 안 중앙 정렬 */
+	display : flex;
+	justify-content : center;
+	align-items : center;
+}
+
+select {
+	color :#6f6f6f;
+}
+
+.pSelect {
+	position: absolute;
+	color:#000 !important;
+}
+
+/* product Select */
+
+/* 모달창 화면 설정  start*/
+#pSelectContainer{
+	width: 100%;
+	height: 100%;
+	padding: 10px;
+		
+	z-index:10;
+	position: fixed;
+	top: 0;
+	left: 0;
+	display: flex;
+	
+	justify-content: center;
+	align-items: center;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.pSelectBox {
+	z-index:10;
+	position: absolute;
+	
+	width: 650px;
+	height: 750px;
+	padding: 30px;
+	border-radius: 5px;
+	
+	background-color: #ffffff;
+	
+}
+
+.pSelectContent {
+	height: 550px;
+	overflow-y: auto;
+}
+
+/* 모달창 화면 설정  end*/
+
+#pSelectContainer.modalHidden {
+	display: none;
+}
+.pSelectTable {
+	border-collapse: separate !important;
+	border-spacing: 0 !important;
+}
+
+.pSelectTable th {
+	
+	border-bottom: 1px solid #dee2e6;
+	background-color: #ffffff;
+	position: sticky;
+	top: 0px;
+}
+.pSelectTable tr:nth-child(2) > td{
+	border-top:none !important;
+}
+.table.table-hover.pSelectTable th , .table.table-hover.pSelectTable td {
+	text-align : center;
+	vertical-align : middle !important;
+}
+
+/* qna 이미지 삽입용 text박스 */
+.textbox {
+	height:450px;
+	overflow: auto;
+}

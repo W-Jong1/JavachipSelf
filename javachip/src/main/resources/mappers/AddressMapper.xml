@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.addressMapper">
+	<!-- 메인배송지 조회 -->
+	<select id="addressSelect" resultType="AddressVO" parameterType="int">
+		SELECT *
+		FROM addr
+		where uNo = #{uNo} and aStatus = 'A'
+	</select>
+	
+	<!-- 추가배송지 조회 -->
+	<select id="addressSelectSub" resultType="AddressVO" parameterType="int">
+		SELECT * 
+		FROM addr
+		where uNo = #{uNo} and aStatus ="B"
+	</select>
+	
+	<!-- 배송지 저장 및 수정 -->
+	<insert id = "addressSaved" parameterType="addressVO">
+		INSERT INTO addr(
+			 uNo
+			,aStatus
+			,aName
+			,Addr1
+			,Addr2
+			,Addr3
+			,aPhone
+			,aMail
+			,aComment
+		)values(
+			 #{uNo}
+			,#{aStatus}
+			,#{aName}
+			,#{Addr1}
+			,#{Addr2}
+			,#{Addr3}
+			,#{aPhone}
+			,#{aMail}
+			,#{aComment}
+		)ON DUPLICATE KEY UPDATE
+			 aStatus = #{aStatus}
+			,aName = #{aName}
+			,Addr1 = #{Addr1}
+			,Addr2 = #{Addr2}
+			,Addr3 = #{Addr3}
+			,aPhone = #{aPhone}
+			,aMail = #{aMail}
+			,aComment = #{aComment}
+	</insert>
+	
+	<!-- 배송시 전달사항 -->
+	<update id="updateComment">
+	update addr
+	set aComment = #{aComment}
+	where uNo =#{uNo}
+	</update>
+	
+	<!-- 주문자 정보와 동일 -->
+	<select id="SamePerson" resultType="userVO" parameterType="int">
+		SELECT
+			u.uName,
+			u.uAdd1,
+			u.uAdd2,
+			u.uAdd3,
+			u.uPhone,
+			u.uMail
+		FROM
+			user u
+		JOIN
+			addr a ON u.uNo = a.uNo
+		WHERE u.uNo = #{uNo} and a.aStatus = 'A'
+	</select>
+	
+	<!-- 배송지 저장/수정 -->
+	<update id="updateAddress" parameterType="addressVO">
+		update addr
+		set aName = #{aName}
+		,   Addr1 = #{Addr1}
+		,   Addr2 = #{Addr2}
+		,   Addr3 = #{Addr3}
+		,   aPhone = #{aPhone}
+		,   aMail = #{aMail}
+		,   aComment = #{aComment}
+		,   aStatus = #{aStatus}
+		where uNo = #{uNo}
+		and addNo = #{addNo}
+	</update>
+	
+	<insert id="insertAddress" parameterType="addressVO">
+		insert into addr(uNo,aStatus,aName,Addr1,Addr2,Addr3,aPhone,aMail,aComment)
+		values(#{uNo},#{aStatus},#{aName},#{Addr1},#{Addr2},#{Addr3},#{aPhone},#{aMail},#{aComment})
+	</insert>
+	
+	<select id="countAdd" parameterType="int" resultType="int">
+		select count(*) from addr where uNo = #{uNo}
+	</select>
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.pattachMapper">
+	<!-- 파일 조회 -->
+	<select id="selectPattach" resultType="PattachVO" parameterType="int">
+		SELECT *
+		  FROM pattach
+		 WHERE pNo = #{pNo}
+	</select>
+	
+	<!-- 파일 첨부 -->
+	<insert id="insertPattach" parameterType="PattachVO">
+		INSERT INTO
+		pattach (
+			 pNo
+			,aOriginName
+			,aChangeName
+		) VALUES (
+			 #{pNo}
+			,#{aOriginName}
+			,#{aChangeName}
+		)
+		<selectKey order="AFTER" keyProperty="aNo" resultType="int">
+			SELECT MAX(aNo)
+			  FROM pattach
+		</selectKey>
+	</insert>
+	
+	<!-- 파일 삭제 -->
+	<delete id="deletePattach" parameterType="int">
+		DELETE
+		  FROM pattach
+		 WHERE pNo = #{pNo}
+	</delete>
+	
+	<!-- 파일 수정 -->
+	<update id="updatePattach" parameterType="PattachVO">
+		UPDATE pattach
+		   SET aOriginName = #{aOriginName}
+		     , aChangeName = #{aChangeName}
+		 WHERE pNo = #{pNo}
+	</update>
+</mapper>

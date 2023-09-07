@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="com.javachip.mapper.UserMapper">
+	
+	<select id="selectUserByLogin" resultType="userVO" parameterType="userVO">
+		SELECT *
+		  FROM user
+		 WHERE uId = #{uId}
+		   AND uRetire = "N"
+	</select>
+	
+	<select id="selectUser" resultType="userVO" parameterType="userVO">
+		SELECT uNo
+			,uId
+			,uPw
+			,uName
+			,uJoin
+			,uRetire
+			,uPhone
+			,uStatus
+			,uBisno
+			,uAdd1
+			,uAdd2
+			,uAdd3
+			,uMail
+			,uAlertNum
+		  FROM user
+		 WHERE uId = #{uId}
+		   AND uPw = #{uPw}
+	</select>
+	
+	<!-- 
+		dao에서 sqlSession객체의 
+		selectOne 메소드를 호출하면 되고
+		그의 결과 타입은 int 이다.
+	 -->
+	<select id="selectCntById" 
+	     parameterType="String" 
+	     resultType="int">
+		select count(uId)
+		  from user
+		 where uId = #{uId}
+	</select>
+	
+	<insert id = "insert" parameterType="userVO">
+		INSERT INTO user(
+			 uId
+			,uPw
+			,uName
+			,uJoin
+			,uRetire
+			,uPhone
+			,uStatus
+			,uBisno
+			,uAdd1
+			,uAdd2
+			,uAdd3
+			,uMail
+			,uAlertNum
+		)values(
+			 #{uId}
+			,#{uPw}
+			,#{uName}
+			,NOW()
+			,"N"
+			,#{uPhone}
+			,"N"
+			,""
+			,#{uAdd1}
+			,#{uAdd2}
+			,#{uAdd3}
+			,#{uMail}
+			,#{uAlertNum}
+		)
+		<selectKey order="AFTER" keyProperty="uNo" resultType="int">
+			SELECT MAX(uNo)
+			  FROM user
+		</selectKey>
+	</insert>
+	
+	<insert id = "insertBiz" parameterType="userVO">
+		INSERT INTO user(
+			 uId
+			,uPw
+			,uName
+			,uJoin
+			,uRetire
+			,uPhone
+			,uStatus
+			,uBisno
+			,uBisName
+			,uAdd1
+			,uAdd2
+			,uAdd3
+			,uMail
+			,uAlertNum
+		)values(
+			 #{uId}
+			,#{uPw}
+			,#{uName}
+			,NOW()
+			,"N"
+			,#{uPhone}
+			,"W"
+			,#{uBisno}
+			,#{uBisName}
+			,#{uAdd1}
+			,#{uAdd2}
+			,#{uAdd3}
+			,#{uMail}
+			,#{uAlertNum}
+		)
+		<selectKey order="AFTER" keyProperty="uNo" resultType="int">
+			SELECT MAX(uNo)
+			  FROM user
+		</selectKey>
+	</insert>
+	
+	<select id="idFind" resultType="userVO" parameterType="userVO">
+		SELECT uId
+		  FROM user
+		 WHERE uName = #{uName}
+		   AND uMail = #{uMail}
+	</select>
+	
+	<select id="pwFind" resultType="userVO" parameterType="userVO">
+		UPDATE user
+		   SET uPw = #{uPw}
+		 WHERE uMail = #{uMail} 
+		   AND uId = #{uId}
+		   AND uName = #{uName}
+	</select>
+	
+	<select id="idCheck" resultType="userVO">
+		SELECT *
+		  FROM user
+		 WHERE uId = #{uId}
+	</select>
+	
+<!-- =============================== mypage 관련 쿼리 ==================================== -->
+	<select id="infoCheck" resultType="userVO" parameterType="int">
+		SELECT *
+		  FROM user
+		 WHERE uNo = #{uNo}
+	</select>
+	
+	<!--  -->
+	<update id = "infoUpdate" parameterType="userVO">
+		UPDATE user
+		   SET uName = #{uName}
+			  ,uPhone = #{uPhone}
+			  ,uBisno = #{uBisno}
+			  ,uAdd1 = #{uAdd1}
+			  ,uAdd2 = #{uAdd2}
+			  ,uAdd3 = #{uAdd3}
+			  ,uMail = #{uMail}
+		 WHERE uNo = #{uNo}
+	</update>
+	
+	<update id = "pwUpdate" parameterType="userVO">
+		UPDATE user
+		   SET uPw = #{uPw}
+		 WHERE uNo = #{uNo}
+	</update>
+
+	<update id = "goodbye" parameterType="userVO">
+		update user
+		set uRetire = 'Y'
+		 WHERE uNo = #{uNo}
+	</update>
+
+	
+<!-- ===============================관리자용 sql 쿼리 모음================================ -->
+	<!-- 관리자 일반회원 공통조건 검색 참조 -->
+	<sql id="findUser">
+		<if test='AdminSearchId != null and AdminSearchId.equals("uId")'>
+		and uId like concat('%', #{AdminSearchIdValue}, '%') 
+		</if>
+		<if test='AdminSearchId != null and AdminSearchId.equals("uName")'>
+		and uName like concat('%', #{AdminSearchIdValue}, '%')
+		</if>
+	</sql>
+	<!-- 관리자 일반회원 전체 목록 -->
+	<select id="selectUserByAdmin" resultType="userVO" parameterType="AdminSearchVO">
+		SELECT * FROM user
+		where uStatus ='N'
+		<include refid="findUser" />
+		order by uNo asc limit #{sNum},#{perPageNum}
+	</select>
+	
+	<!-- 관리자 사업자회원 전체 목록 -->
+	<select id="selectBizUserByAdmin" resultType="userVO" parameterType="AdminSearchVO">
+		SELECT * FROM user
+		where uStatus ='B' or uStatus= 'W'
+		<include refid="findUser" />
+		order by uNo asc limit #{sNum},#{perPageNum}
+	</select>
+	
+	<!-- 블랙리스트회원 전체 목록 -->
+	<select id="selectBlakListByAdmin" resultType="userVO" parameterType="AdminSearchVO">
+		SELECT * FROM user
+		where (uAlertNum > 0 or uStatus = 'Y')
+		<include refid="findUser" />
+		order by uAlertNum desc limit #{sNum},#{perPageNum}
+	</select>
+	
+	<!-- 관리자 일반회원 세부 목록 -->
+	<select id="selectUserOneByuNoByAdmin" resultType="userVO" parameterType="int">
+		SELECT * FROM user
+		where uStatus = 'N'
+		and uNo = #{uNo}
+	</select>
+	
+	<!-- 관리자 사업자회원 세부 목록 -->
+	<select id="selectBizUserOneByuNoByAdmin" resultType="userVO" parameterType="int">
+		SELECT * FROM user
+		where (uStatus = 'B' or uStatus = 'W')
+		and uNo = #{uNo}
+	</select>
+	
+	<!-- 관리자 블랙리스트 세부 목록 -->
+	<select id="selectBlacklistOneByuNoByAdmin" resultType="userVO" parameterType="int">
+		SELECT * FROM user
+		where (uAlertNum > 0 or uStatus = 'Y')
+		and uNo = #{uNo}
+	</select>
+	
+	<!-- 관리자 페이징 일반유저 전체 갯수 -->
+	<select id="UserTotal" resultType="int">
+		select count(*) as cnt from user
+		where uStatus = 'N'
+		<include refid="findUser" />
+	</select>
+	
+	<!-- 관리자 페이징 사업자유저 전체 갯수 -->
+	<select id="BizUserTotal" resultType="int">
+		select count(*) as cnt from user
+		where uStatus = 'B'
+		<include refid="findUser" />
+	</select>
+	
+		<!-- 관리자 페이징 사업자유저 전체 갯수 -->
+	<select id="BlacklistTotal" resultType="int">
+		select count(*) as cnt from user
+		where uAlertNum > 0
+		<include refid="findUser" />
+	</select>
+	
+	<!-- 일반회원경고횟수추가 -->
+	<update id="AlertUser" parameterType="int">
+		update user
+		set uAlertNum = uAlertNum + 1
+		where uNo = #{uNo}
+	</update>
+	
+	<!-- 정지 해제 -->
+	<update id="NonStopUser" parameterType="UserVO">
+		update user
+		set uStatus = CASE WHEN uBisno = '' THEN 'N' ELSE 'B' END
+		where uNo = #{uNo}
+	</update>
+	
+	<!-- 유저 정지 -->
+	<update id="stopUser" parameterType="int">
+	update user
+	set uStatus = 'Y'
+	where uNo = #{uNo}
+	</update>
+	
+	<!-- 사업자용 대기 해제 -->
+	<update id="cancleWait" parameterType="int">
+	update user
+	set uStatus = 'B'
+	where uNo = #{uNo}
+	</update>
+</mapper>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.order_Mapper">
+	<!-- 사용자의 주문 조회 -->
+	<select id="selectUserOrder" parameterType="int" resultType="Order_VO">
+		SELECT *
+		     , (SELECT aChangeName FROM pattach WHERE pNo = d.pNo) AS aChangeName
+		     , (SELECT pName FROM product WHERE pNo = d.pNo) AS pName
+		     , COUNT(d.pNo)-1 AS oCount
+		  FROM order_ o
+		  JOIN order_detail d
+		    ON o.oNo = d.oNo
+		 WHERE o.uNo = #{uNo}
+		 GROUP BY o.oNo
+		 ORDER BY o.oDate DESC
+	</select>
+	
+	<!-- 정기배송 주문 조회 -->
+	<select id="selectUserRegularOrder" parameterType="int" resultType="Order_VO">
+		SELECT *
+		  FROM order_
+		 WHERE oNo = #{oNo}
+	</select>
+	
+	<!-- 사용자 주문 총합 -->
+	<select id="countUserOrder" parameterType="int" resultType="int">
+		SELECT COUNT(*)
+		  FROM order_
+		 WHERE uNo = #{uNo}
+	</select>
+	
+	<!-- 주문 -->
+	<insert id="insertOrder" parameterType="Order_VO">
+		INSERT INTO
+		order_ (
+			 uNo
+			,oTrackNo
+			,oTotalPrice
+			,oPay
+			,oStatus
+			,addNo
+		) VALUES (
+			 #{uNo}
+			,0
+			,#{oTotalPrice}
+			,#{oPay}
+			,#{oStatus}
+			,#{addNo}
+		)
+		<selectKey order="AFTER" keyProperty="oNo" resultType="int">
+			SELECT MAX(oNo)
+			  FROM order_
+		</selectKey>
+	</insert>
+	
+	
+	<!-- 수령인 정보 수정 -->
+	<update id="updateOrderReceiver" parameterType="Order_VO">
+		UPDATE order_
+		   SET oName = #{oName}
+		     , addNo = #{addNo}
+		 WHERE oNo = #{oNo}
+		   AND uNo = #{uNo}
+	</update>
+	
+	<!-- 관리자의 모든 주문 조회 -->
+	<select id="selectOrderForAdmin" resultType="Order_VO">
+		SELECT *
+		  FROM order_
+	</select>
+	
+	<!-- 주문 상태 업데이트 : 취소, 반품 등등 관리자 권한 -->
+	<update id="updateOrderStatus" parameterType="Order_VO">
+		UPDATE order_
+		   SET oStatus = #{oStatus}
+		 WHERE oNo = #{oNo}
+	</update>
+	
+	<!-- =====================관리자용 sql모음 =====================-->
+	<sql id="findOrder">
+		<if test='searchType != null and searchType.equals("uId")'>
+		AND u.uId LIKE CONCAT('%', #{searchValue}, '%') 
+		</if>
+	</sql>
+	
+	<!-- 검색기능 추가한 order 모음 -->
+	<select id="selectByAdmin" resultType="Order_VO" parameterType="AdminSearchVO">
+			SELECT o.*, u.uId, p.pName
+				FROM Order_ o
+				LEFT JOIN Order_Detail c ON o.oNo = c.oNo
+				LEFT JOIN Product p ON c.pNo = p.pNo
+				LEFT JOIN User u ON o.uNo = u.uNo
+				WHERE 1 = 1
+				<include refid="findOrder" />
+				ORDER BY o.oNo ASC
+				LIMIT #{sNum}, #{perPageNum};
+	</select>
+	
+	<!-- 페이징 위한 order 총 목록 갯수 -->
+	<select id="OrderTotal" resultType="int">
+		SELECT count(*) as cnt
+		FROM Order_ o
+		LEFT JOIN User u ON o.uNo = u.uNo
+		WHERE 1 = 1
+		<include refid="findOrder" />
+	</select>
+	
+	<!-- 주문 삭제 -->
+	<update id="deleteProduct">
+		update Order_
+		set oStatus = 'Y'
+		where oNo = #{oNo}
+	</update>
+</mapper>

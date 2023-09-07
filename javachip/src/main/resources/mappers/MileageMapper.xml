@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.mileageMapper">
+	<!-- 마일리지 적립 -->
+		<insert id="plusMileage" parameterType="MileageVO">
+			INSERT INTO
+			mileage (
+				 uNo
+				,mPlus
+				,mMinus
+				,mNote
+			) VALUES (
+				 #{uNo}
+				,#{mPlus}
+				,0
+				,#{mNote}
+			)
+		</insert>
+	<!-- 마일리지 적립 -->
+	
+	<!-- 마일리지 차감 -->
+		<insert id="minusMileage" parameterType="MileageVO">
+			INSERT INTO
+			mileage (
+				 uNo
+				,mPlus
+				,mMinus
+				,mNote
+			) VALUES (
+				 #{uNo}
+				,0
+				,#{mMinus}
+				,#{mNote}
+			)
+		</insert>
+	<!-- 마일리지 차감 -->
+	
+	<!-- 마일리지 조회 -->
+		<select id="selectTotalMileage" resultType="int" parameterType="int">
+			SELECT SUM(mPlus)-SUM(mMinus) as total
+			  FROM mileage
+			 WHERE uNo = #{uNo}
+		</select>
+	<!-- 마일리지 조회 -->
+	
+	<!-- 마일리지 내역 조회 -->
+		<select id="selectAllMileage" resultType="MileageVO" parameterType="int">
+			SELECT *
+			  FROM mileage
+			 WHERE uNo = #{uNo}
+			 ORDER BY mDate DESC
+		</select>
+	<!-- 마일리지 내역 조회 -->
+</mapper>

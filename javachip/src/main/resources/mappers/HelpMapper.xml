@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.helpMapper">
+	<!-- Search -->
+	<sql id="qSearch">
+		<if test='searchType != null and searchType.equals("title")'>
+				AND qTitle like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("content")'>
+			AND qContents like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("tnc")'>
+			AND qTitle like concat('%',#{searchValue},'%')
+			OR qContents like concat('%',#{searchValue},'%')
+		</if>
+		<!-- 마이페이지용 검색 -->
+		<if test='searchType != null and searchType.equals("uNo")'>
+			AND uNo = #{searchValue}
+		</if>
+		<if test='searchType != null and searchType.equals("pNo")'>
+			AND pNo = #{searchValue}
+		</if>
+	</sql>
+	<sql id="nSearch">
+		<if test='searchType != null and searchType.equals("title")'>
+			AND nTitle like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("content")'>
+			AND nContents like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("tnc")'>
+			AND nTitle like concat('%',#{searchValue},'%')
+			OR nContents like concat('%',#{searchValue},'%')
+		</if>
+	</sql>
+	<sql id="pSearch">
+		<if test='searchType != null and searchType.equals("name")'>
+			AND pName like concat('%',#{searchValue},'%')
+		</if>
+	</sql>
+	<!-- 공지사항 -->
+	<insert id="insertNotice" parameterType="noticeVO">
+		INSERT INTO Notice 
+		(uNo, nTitle, nContents)
+		VALUES(#{uNo},#{nTitle},#{nContents})
+		<selectKey order="AFTER" keyProperty="nNo" resultType="int">
+			SELECT MAX(nNo) as nNo 
+			FROM Notice
+		</selectKey>
+	</insert>
+	
+	<select id="selectNoticeAll" resultType="noticeVO" parameterType="searchVO">
+		SELECT * , 
+		( SELECT uName from User where uNo = Notice.uNo ) as uName
+		FROM Notice
+		WHERE delYN = 'N'
+		<include refid ="nSearch"/>
+		ORDER BY nNo DESC
+		LIMIT #{startNum},#{perPageNum}
+	</select>
+	
+	<select id="selectOneByNno" resultType="noticeVO" parameterType="int">
+		SELECT * , 
+		( SELECT uName from User where uNo = Notice.uNo ) as uName 
+		FROM Notice
+		WHERE delYN = 'N'
+		AND nNo = #{nNo}
+	</select>
+	
+	<select id="selectNearNno" resultType="noticeVO" parameterType="int">
+		SELECT nNo,nTitle from Notice
+		WHERE ( nNo = IFNULL((SELECT MIN(nNo) FROM Notice WHERE nNo &gt; #{nNo} AND delYN = 'N'),0) 
+		OR nNo = IFNULL((SELECT MAX(nNo) FROM Notice WHERE nNo &lt; #{nNo} AND delYN = 'N'),0)
+		)ORDER BY nNo DESC
+	</select>
+	
+	<update id="modifyNotice" parameterType="noticeVO">
+		UPDATE Notice
+		SET uNo = #{uNo}, nTitle = #{nTitle}, nContents = #{nContents}
+		WHERE nNo = #{nNo}
+	</update>
+	
+	<update id="deleteNotice" parameterType="int">
+		UPDATE Notice 
+		SET delYN = 'Y'
+		WHERE nNo = #{nNo}
+	</update>
+	<select id="totalNotice" resultType="int">
+		SELECT COUNT(*) AS cnt FROM Notice
+		WHERE delYN='N'
+		<include refid="nSearch" />
+	</select>
+	<!-- QnA -->
+	<insert id="insertQna" parameterType="qnaVO">
+		INSERT INTO QnA 
+		(uNo, qTitle, qContents, qType, pNo, secretYN) 
+		VALUES(#{uNo},#{qTitle},#{qContents},#{qType},#{pNo}, 
+		IFNULL(#{secretYN},'N')
+		)
+		
+		<selectKey resultType="int" keyProperty="qNo" order="AFTER">
+			SELECT max(qNo) as qNo 
+			FROM QnA
+		</selectKey>
+	</insert>
+	
+	<select id="selectProductAll" resultType="productVO" parameterType="searchVO">
+		SELECT * 
+		, (SELECT aChangeName
+			FROM Pattach
+			WHERE pNo=Product.pNo
+		) AS aChangeName
+		FROM Product
+		WHERE delYN = 'N'
+		<include refid="pSearch" />
+		ORDER BY pNo
+		LIMIT #{startNum},#{perPageNum}
+	</select>
+	
+	<select id="selectQnaAll" resultType="qnaVO" parameterType="searchVO">
+		SELECT * 
+		<!-- masking uName 선택 -->
+		, (SELECT
+			CONCAT 
+			( SUBSTRING(uName,1,1),RPAD('',CHAR_LENGTH(uName)-1,'*') )
+			FROM User 
+			WHERE uNo=Qna.uNo
+		)AS uName
+		
+		<!-- Name if문에 관리자 타입 조건걸기 위해 uStatus 선택 -->
+		,(SELECT uStatus 
+			FROM User 
+			WHERE uNo = Qna.uNo 
+		) AS uStatus
+		FROM QnA
+		WHERE delYN = 'N'
+		<include refid ="qSearch"/>
+		ORDER BY qNo DESC
+		LIMIT #{startNum},#{perPageNum}
+	</select>
+	
+	<select id="selectOneByQno" resultType="QnaVO" parameterType="int">
+		SELECT * 
+		<!-- masking uName 선택 -->
+		, (SELECT
+			CONCAT 
+			( SUBSTRING(uName,1,1),RPAD('',CHAR_LENGTH(uName)-1,'*') )
+			FROM User 
+			WHERE uNo=qna.uNo
+		)AS uName
+		<!-- Name if문에 관리자 타입 조건걸기 위해 uStatus 선택 -->
+		,(
+		SELECT uStatus 
+		FROM User 
+		WHERE uNo = Qna.uNo 
+		) AS uStatus
+		<!-- pNo로부터 pName을 가져온다. -->
+		,(SELECT
+			pName
+			FROM Product
+			WHERE pNo=qna.pNo
+		) AS pName
+		FROM Qna
+		WHERE delYN = 'N'
+		AND qNo = #{qNo}
+	</select>
+	
+	<select id="selectNearQno" resultType="QnaVO" parameterType="int">
+		SELECT qNo,qTitle,secretYN from Qna
+		WHERE ( qNo = IFNULL((SELECT MIN(qNo) FROM Qna WHERE qNo &gt; #{qNo} AND delYN = 'N'),0) 
+		OR qNo = IFNULL((SELECT MAX(qNo) FROM Qna WHERE qNo &lt; #{qNo} AND delYN = 'N'),0)
+		)ORDER BY qNo DESC
+	</select>
+	
+	<update id="deleteQna" parameterType="int">
+		UPDATE Qna 
+		SET delYN = 'Y'
+		WHERE qNo = #{qNo}
+	</update>
+	<select id="totalQna" resultType="int">
+		SELECT COUNT(*) AS cnt FROM Qna
+		WHERE delYN='N'
+		<include refid="qSearch" />
+	</select>
+	
+	<select id="totalProduct" resultType="int">
+		SELECT COUNT(*) AS cnt FROM Product
+		WHERE 1=1
+		<include refid="pSearch" />
+		
+	</select>
+	
+	<update id="answerQna" parameterType="qnaVO">
+		UPDATE Qna
+		SET qAnswer = #{qAnswer}, qAnswerDate = NOW()
+		WHERE qNo = #{qNo}
+	</update>
+	
+	<!-- =============================관리자용 sql쿼리문 모음======================================== -->
+	<!-- 관리자 로그인 확인 -->
+	<select id="checkStatusAdmin" parameterType="int" resultType="int">
+		SELECT count(*) as cnt FROM User 
+		WHERE uNo = #{uNo} 
+		AND uStatu = 'A'
+	</select>
+	
+	<!-- 관리자 공지사항 검색/페이징 공지사항 전체 갯수 -->
+	<select id="NoticeTotal" resultType="int">
+		select count(*) as cnt from notice
+		where delYN = 'N'
+		<if test='searchType != null and searchType.equals("title")'>
+			AND nTitle like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("content")'>
+			AND nContents like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("tnc")'>
+			AND nTitle like concat('%',#{searchValue},'%')
+			AND nContents like concat('%',#{searchValue},'%')
+		</if>
+	</select>
+	
+	<!-- 관리자 공지사항 페이징 전체목록(메인) -->
+	<select id="selectNoticeByAdmin" resultType="noticeVO" parameterType="AdminSearchVO">
+		SELECT * FROM notice
+		where delYN = 'N'
+		<if test='searchType != null and searchType.equals("title")'>
+			AND nTitle like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("content")'>
+			AND nContents like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("tnc")'>
+			AND nTitle like concat('%',#{searchValue},'%')
+			AND nContents like concat('%',#{searchValue},'%')
+		</if>
+		order by nNo asc limit #{nPage},#{perPageNum}
+	</select>
+	
+	<!-- 관리자 공지사항 페이징 전체목록(공지사항) -->
+	<select id="selectNoticeByAdminFromNotice" resultType="noticeVO" parameterType="AdminSearchVO">
+		SELECT * FROM notice
+		where delYN = 'N'
+		<if test='searchType != null and searchType.equals("title")'>
+			AND nTitle like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("content")'>
+			AND nContents like concat('%',#{searchValue},'%')
+		</if>
+		<if test='searchType != null and searchType.equals("tnc")'>
+			AND nTitle like concat('%',#{searchValue},'%')
+			AND nContents like concat('%',#{searchValue},'%')
+		</if>
+		order by nNo desc limit #{sNum},#{perPageNum}
+	</select>
+	
+	<!-- 관리자 QnA 검색/페이징 전체 목록(qna) -->
+	<select id="selectQnAByAdminFromQna" resultType="QnaVO" parameterType="AdminSearchVO">
+		SELECT * FROM qna
+		where 1 = 1
+		<if test='searchType_qna != null and searchType_qna.equals("complete")'>
+			AND qAnswer is NOT NULL
+		</if>
+		<if test='searchType_qna != null and searchType_qna.equals("wait")'>
+			AND qAnswer is NULL
+		</if>
+		order by qNo desc limit #{sNum},#{perPageNum}
+	</select>
+	
+	<!-- 관리자 QnA 검색/페이징 전체 목록(메인) -->
+	<select id="selectQnAByAdmin" resultType="QnaVO" parameterType="AdminSearchVO">
+		SELECT * FROM qna
+		where delYN = 'N'
+		<if test='searchType_qna != null and searchType_qna.equals("complete")'>
+			AND qlevel > 0
+		</if>
+		<if test='searchType_qna != null and searchType_qna.equals("wait")'>
+			AND qlevel = 0
+		</if>
+		order by qNo asc limit #{qPage},#{perPageNum}
+	</select>
+	
+	<!-- 관리자 QnA 검색/페이징 공지사항 전체 갯수 -->
+	<select id="QnATotal" resultType="int">
+		select count(*) as cnt from qna
+		where delYN = 'N'
+		<if test='searchType_qna != null and searchType_qna.equals("complete")'>
+			AND qAnswer is NOT NULL
+		</if>
+		<if test='searchType_qna != null and searchType_qna.equals("wait")'>
+			AND qAnswer is NULL
+		</if>
+	</select>
+	
+	<!-- 관리자 공지사항 선택삭제 -->
+	<update id="deleteNoticeByAdmin">
+		UPDATE Notice 
+		SET delYN = 'Y'
+		WHERE nNo = #{nNo}
+	</update>
+	
+	<!-- 관리자 qna 선택삭제 -->
+	<update id="deleteQnaByAdmin">
+		UPDATE qna 
+		SET delYN = 'Y'
+		WHERE qNo = #{qNo}
+	</update>
+</mapper>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.javachip.mapper.reviewMapper">
+	<sql id="search">
+		<if test='searchType != null and searchType.equals("uNo")'>
+		   AND uNo = #{searchValue}
+		</if>
+		<if test='searchType != null and searchType.equals("pNo")'>
+		   AND pNo = #{searchValue}
+		</if>
+	</sql>
+	<!-- 전체 리뷰 조회 -->
+	<select id="selectAllReview" resultType="ReviewVO">
+		SELECT *
+		     , (SELECT uName FROM user WHERE review.uNo = user.uNo) as uName
+		  FROM review
+		 ORDER BY rNo DESC
+	</select>
+	
+	<!-- 리뷰 조회 -->
+	<select id="selectReview" parameterType="SearchVO" resultType="ReviewVO">
+		SELECT *
+		     , (SELECT uName FROM user WHERE review.uNo = user.uNo) as uName
+		  FROM review
+		 WHERE rDelyn = 'N'
+		<include refid="search"/>
+		 ORDER BY rNo DESC
+		 LIMIT #{startNum}, #{perPageNum}
+	</select>
+	
+	<!-- 유저가 작성한 리뷰 개수 -->
+	<select id="countReview" parameterType="SearchVO" resultType="int">
+		SELECT COUNT(*)
+		  FROM review
+		 WHERE rDelyn = 'N'
+		<include refid="search"/>
+	</select>
+	
+	<!-- 리뷰 작성 -->
+	<insert id="insertReview" parameterType="ReviewVO">
+		INSERT INTO
+		review (
+			uNo,
+			rContents,
+			pNo
+		) VALUES (
+			#{uNo},
+			#{rContents},
+			#{pNo}
+		)
+	</insert>
+	
+	<!-- 리뷰 수정 -->
+	<update id="updateReview" parameterType="ReviewVO">
+		UPDATE review
+		   SET rContents = #{rContents}
+		 WHERE rNo = #{rNo}
+	</update>
+	
+	<!-- 리뷰 삭제 -->
+	<update id="deleteReview" parameterType="ReviewVO">
+		UPDATE review
+		   SET rDelyn = 'Y'
+		 WHERE uNo = #{uNo}
+		   AND pNo = #{pNo}
+	</update>
+	
+	<!-- 특정 리뷰 삭제 -->
+	<update id="deleteOneReview" parameterType="int">
+		UPDATE review
+		   SET rDelyn = 'Y'
+		 WHERE rNo = #{rNo}
+	</update>
+</mapper>
